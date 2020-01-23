@@ -107,6 +107,8 @@ public class FetchCommand extends TransportCommand<FetchCommand, FetchResult> {
 
 	private boolean isForceUpdate;
 
+	private Integer depth;
+
 	/**
 	 * Callback for status of fetch operation.
 	 *
@@ -240,6 +242,7 @@ public class FetchCommand extends TransportCommand<FetchCommand, FetchResult> {
 			if (tagOption != null)
 				transport.setTagOpt(tagOption);
 			transport.setFetchThin(thin);
+			transport.setDepth(this.depth);
 			configure(transport);
 			FetchResult result = transport.fetch(monitor,
 					applyOptions(refSpecs));
@@ -554,5 +557,13 @@ public class FetchCommand extends TransportCommand<FetchCommand, FetchResult> {
 	public FetchCommand setForceUpdate(boolean force) {
 		this.isForceUpdate = force;
 		return this;
+	}
+
+	public Integer getDepth() {
+		return depth;
+	}
+
+	public void setDepth(Integer depth) {
+		this.depth = depth;
 	}
 }

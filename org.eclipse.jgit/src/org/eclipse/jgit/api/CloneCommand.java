@@ -118,6 +118,8 @@ public class CloneCommand extends TransportCommand<CloneCommand, Git> {
 
 	private boolean gitDirExistsInitially;
 
+	private Integer depth;
+
 	/**
 	 * Callback for status of clone operation.
 	 *
@@ -283,7 +285,7 @@ public class CloneCommand extends TransportCommand<CloneCommand, Git> {
 		config.addURI(u);
 
 		final String dst = (bare ? Constants.R_HEADS : Constants.R_REMOTES
-				+ config.getName() + '/') + '*';
+				+ config.getName() + '/') + getBranchAsStrOrWildcard();
 		boolean fetchAll = cloneAllBranches || branchesToClone == null
 				|| branchesToClone.isEmpty();
 
@@ -296,7 +298,7 @@ public class CloneCommand extends TransportCommand<CloneCommand, Git> {
 		FetchCommand command = new FetchCommand(clonedRepo);
 		command.setRemote(remote);
 		command.setProgressMonitor(monitor);
-		command.setTagOpt(fetchAll ? TagOpt.FETCH_TAGS : TagOpt.AUTO_FOLLOW);
+		command.setTagOpt(isDepthSet() || fetchAll ? TagOpt.FETCH_TAGS : TagOpt.AUTO_FOLLOW);
 		configure(command);
 
 		return command.call();
@@ -305,13 +307,13 @@ public class CloneCommand extends TransportCommand<CloneCommand, Git> {
 	private List<RefSpec> calculateRefSpecs(boolean fetchAll, String dst) {
 		RefSpec heads = new RefSpec();
 		heads = heads.setForceUpdate(true);
-		heads = heads.setSourceDestination(Constants.R_HEADS + '*', dst);
+		heads = heads.setSourceDestination(Constants.R_HEADS + getBranchAsStrOrWildcard(), dst);
 		List<RefSpec> specs = new ArrayList<>();
 		if (!fetchAll) {
 			RefSpec tags = new RefSpec();
 			tags = tags.setForceUpdate(true);
-			tags = tags.setSourceDestination(Constants.R_TAGS + '*',
-					Constants.R_TAGS + '*');
+			tags = tags.setSourceDestination(Constants.R_TAGS + getBranchAsStrOrWildcard(),
+					Constants.R_TAGS + getBranchAsStrOrWildcard());
 			for (String selectedRef : branchesToClone) {
 				if (heads.matchSource(selectedRef)) {
 					specs.add(heads.expandFromSource(selectedRef));
@@ -731,5 +733,19 @@ public class CloneCommand extends TransportCommand<CloneCommand, Git> {
 			FileUtils.delete(child, FileUtils.RECURSIVE | FileUtils.SKIP_MISSING
 					| FileUtils.IGNORE_ERRORS);
 		}
+	}
+
+	private String getBranchAsStrOrWildcard() {
+		if (isDepthSet()) {
+			return "*";
+		} else if (Constants.HEAD.equals(this.branch)) {
+			return Constants.MASTER;
+		} else {
+			return this.branch;
+		}
+	}
+
+	private boolean isDepthSet() {
+		return depth != null;
 	}
 }

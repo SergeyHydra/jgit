@@ -806,6 +806,8 @@ public abstract class Transport implements AutoCloseable {
 	private PrintStream hookOutRedirect;
 
 	private PrePushHook prePush;
+
+	private Integer depth;
 	/**
 	 * Create a new transport instance.
 	 *
@@ -1162,6 +1164,14 @@ public abstract class Transport implements AutoCloseable {
 	 */
 	public void setTimeout(int seconds) {
 		timeout = seconds;
+	}
+
+	public Integer getDepth() {
+		return depth;
+	}
+
+	public void setDepth(Integer depth) {
+		this.depth = depth;
 	}
 
 	/**
