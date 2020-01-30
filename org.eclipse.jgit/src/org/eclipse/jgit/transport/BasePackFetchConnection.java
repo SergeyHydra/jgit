@@ -49,10 +49,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.MessageFormat;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Set;
+import java.util.*;
 
 import org.eclipse.jgit.errors.PackProtocolException;
 import org.eclipse.jgit.errors.TransportException;
@@ -75,6 +72,7 @@ import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
+import org.eclipse.jgit.storage.file.ShallowFile;
 import org.eclipse.jgit.transport.GitProtocolConstants.MultiAck;
 import org.eclipse.jgit.transport.PacketLineIn.AckNackResult;
 import org.eclipse.jgit.util.TemporaryBuffer;
@@ -240,6 +238,10 @@ public abstract class BasePackFetchConnection extends BasePackConnection
 
 	private int maxHaves;
 
+	private int depth;
+
+	private boolean sendWantsDeepen;
+
 	/** RPC state, if {@link BasePackConnection#statelessRPC} is true. */
 	private TemporaryBuffer.Heap state;
 
@@ -271,6 +273,7 @@ public abstract class BasePackFetchConnection extends BasePackConnection
 		}
 
 		includeTags = transport.getTagOpt() != TagOpt.NO_TAGS;
+		depth = transport.getDepth();
 		thinPack = transport.isFetchThin();
 		filterSpec = transport.getFilterSpec();
 
@@ -518,6 +521,34 @@ public abstract class BasePackFetchConnection extends BasePackConnection
 			}
 			line.append('\n');
 			p.writeString(line.toString());
+		}
+		// if commit is mentioned in $GITDIR/shallow we have to send a
+		// shallow <commit-id> line, see
+		// https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L220
+		final ShallowFile shallow = this.local
+				.getRepositoryShallowHandler();
+		try {
+			shallow.lock();
+			final List<ObjectId> shallowCommits = shallow.read();
+			for (ObjectId shallowCommit : shallowCommits) {
+				final String id = shallowCommit.getName();
+				final StringBuilder builder = new StringBuilder(46);
+				builder.append(ShallowFile.PREFIX_SHALLOW); // $NON-NLS-1$
+				builder.append(id);
+				builder.append('\n');
+				p.writeString(builder.toString());
+			}
+		} finally {
+			shallow.unlock(false);
+		}
+
+		// if depth is set, write deepen <depth> line
+		if (depth != 0 && sendWantsDeepen) {
+			final StringBuilder builder = new StringBuilder(46);
+			builder.append("deepen "); //$NON-NLS-1$
+			builder.append(depth);
+			builder.append('\n');
+			p.writeString(builder.toString());
 		}
 		if (first) {
 			return false;

@@ -85,6 +85,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.lib.RepositoryCache.FileKey;
+import org.eclipse.jgit.storage.file.ShallowFile;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.FileUtils;
 import org.slf4j.Logger;
@@ -138,7 +139,7 @@ public class ObjectDirectory extends FileObjectDatabase {
 
 	private final UnpackedObjectCache unpackedObjectCache;
 
-	private final File shallowFile;
+	private final ShallowFile shallowFile;
 
 	private FileSnapshot shallowFileSnapshot = FileSnapshot.DIRTY;
 
@@ -165,7 +166,7 @@ public class ObjectDirectory extends FileObjectDatabase {
 	 *             an alternate object cannot be opened.
 	 */
 	public ObjectDirectory(final Config cfg, final File dir,
-			File[] alternatePaths, FS fs, File shallowFile) throws IOException {
+			File[] alternatePaths, FS fs, ShallowFile shallowFile) throws IOException {
 		config = cfg;
 		objects = dir;
 		infoDirectory = new File(objects, "info"); //$NON-NLS-1$
@@ -788,28 +789,17 @@ public class ObjectDirectory extends FileObjectDatabase {
 
 	@Override
 	Set<ObjectId> getShallowCommits() throws IOException {
-		if (shallowFile == null || !shallowFile.isFile())
-			return Collections.emptySet();
-
-		if (shallowFileSnapshot == null
-				|| shallowFileSnapshot.isModified(shallowFile)) {
-			shallowCommitsIds = new HashSet<>();
-
-			try (BufferedReader reader = open(shallowFile)) {
-				String line;
-				while ((line = reader.readLine()) != null) {
-					try {
-						shallowCommitsIds.add(ObjectId.fromString(line));
-					} catch (IllegalArgumentException ex) {
-						throw new IOException(MessageFormat
-								.format(JGitText.get().badShallowLine, line));
-					}
-				}
+		if (shallowFile == null) {
+			shallowCommitsIds = Collections.emptySet();
+		} else {
+			try {
+				shallowFile.lock();
+				final List<ObjectId> list = shallowFile.read();
+				shallowCommitsIds = new HashSet<>(list);
+			} finally {
+				shallowFile.unlock(false);
 			}
-
-			shallowFileSnapshot = FileSnapshot.save(shallowFile);
 		}
-
 		return shallowCommitsIds;
 	}
 

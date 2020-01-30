@@ -107,7 +107,7 @@ public class FetchCommand extends TransportCommand<FetchCommand, FetchResult> {
 
 	private boolean isForceUpdate;
 
-	private Integer depth;
+	private int depth;
 
 	/**
 	 * Callback for status of fetch operation.
@@ -559,11 +559,11 @@ public class FetchCommand extends TransportCommand<FetchCommand, FetchResult> {
 		return this;
 	}
 
-	public Integer getDepth() {
+	public int getDepth() {
 		return depth;
 	}
 
-	public void setDepth(Integer depth) {
+	public void setDepth(int depth) {
 		this.depth = depth;
 	}
 }

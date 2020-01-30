@@ -81,6 +81,7 @@ import org.eclipse.jgit.lib.ReflogReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.storage.file.ShallowFile;
 import org.eclipse.jgit.storage.pack.PackConfig;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.FileUtils;
@@ -226,7 +227,7 @@ public class FileRepository extends Repository {
 				options.getObjectDirectory(), //
 				options.getAlternateObjectDirectories(), //
 				getFS(), //
-				new File(getDirectory(), Constants.SHALLOW));
+				getRepositoryShallowHandler());
 
 		if (objectDatabase.exists()) {
 			if (repositoryFormatVersion > 1)
@@ -641,7 +642,6 @@ public class FileRepository extends Repository {
 				}
 			}
 		}
-
 	}
 
 	private boolean shouldAutoDetach() {
@@ -662,5 +662,10 @@ public class FileRepository extends Repository {
 		} catch (ParseException | IOException e) {
 			throw new JGitInternalException(JGitText.get().gcFailed, e);
 		}
+	}
+
+	@Override
+	public ShallowFile getRepositoryShallowHandler() {
+		return new ShallowFile(this.getDirectory());
 	}
 }

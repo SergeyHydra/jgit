@@ -118,7 +118,7 @@ public class CloneCommand extends TransportCommand<CloneCommand, Git> {
 
 	private boolean gitDirExistsInitially;
 
-	private Integer depth;
+	private int depth;
 
 	/**
 	 * Callback for status of clone operation.
@@ -746,6 +746,6 @@ public class CloneCommand extends TransportCommand<CloneCommand, Git> {
 	}
 
 	private boolean isDepthSet() {
-		return depth != null;
+		return depth != 0;
 	}
 }

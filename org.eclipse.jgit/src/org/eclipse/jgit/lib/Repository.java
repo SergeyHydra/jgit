@@ -92,6 +92,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevObject;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.storage.file.ShallowFile;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.treewalk.TreeWalk;
@@ -2098,4 +2099,6 @@ public abstract class Repository implements AutoCloseable {
 	public void autoGC(ProgressMonitor monitor) {
 		// default does nothing
 	}
+
+	public abstract ShallowFile getRepositoryShallowHandler();
 }

@@ -476,6 +476,7 @@ public class JGitText extends TranslationBundle {
 	/***/ public String invalidReftableFile;
 	/***/ public String invalidRemote;
 	/***/ public String invalidShallowObject;
+	/***/ public String invalidShallowFile;
 	/***/ public String invalidStageForPath;
 	/***/ public String invalidSystemProperty;
 	/***/ public String invalidTagOption;
